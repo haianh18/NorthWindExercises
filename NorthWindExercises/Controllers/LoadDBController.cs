@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using NorthWindExercises.Modeldto;
 using NorthWindExercises.Models;
 
@@ -172,7 +170,7 @@ namespace NorthWindExercises.Controllers
         public IEnumerable<object> Bai21(DateTime startDate, DateTime endDate)
         {
             var revenues = NorthwindDbContext.INSTANCE.OrderDetails
-                .Where(od => od.Order.OrderDate.Value >= startDate
+                .Where(od => od.Order.OrderDate.HasValue && od.Order.OrderDate.Value >= startDate
                     && od.Order.OrderDate.Value <= endDate)
                 .Select(od => new
                 {
@@ -250,7 +248,7 @@ namespace NorthWindExercises.Controllers
             return result;
         }
 
-        [HttpGet("Bai25/TopOrderedProducts/{units}")]
+        [HttpGet("Bai25/TopOrderedProducts/{units}")] //same as Bai26
         public IEnumerable<object> Bai25(int units)
         {
             var result = NorthwindDbContext.INSTANCE.OrderDetails
@@ -265,6 +263,29 @@ namespace NorthWindExercises.Controllers
                 .ToList();
 
             return result;
+        }
+
+        [HttpGet("Bai27/CategoryByMaxProduct")]
+        public IEnumerable<object> Bai27()
+        {
+            var max = NorthwindDbContext.INSTANCE.Categories
+                .Select(c => c.Products.Count)
+                .Max();
+            var cate = NorthwindDbContext.INSTANCE.Categories
+                .Where(c => c.Products.Count == max).ToList();
+            return cate;
+        }
+
+        [HttpGet("Bai28/CategoryByMinProduct")]
+        public IEnumerable<object> Bai28()
+        {
+            var min = NorthwindDbContext.INSTANCE.Categories
+                .Select(c => c.Products.Count)
+                .Min();
+            var cate = NorthwindDbContext.INSTANCE.Categories
+     .Where(c => c.Products.Count == min)
+     .ToList();
+            return cate;
         }
 
     }
