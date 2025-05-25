@@ -288,5 +288,172 @@ namespace NorthWindExercises.Controllers
             return cate;
         }
 
+        [HttpGet("Bai29/TotalRecord/Customer&Employees")]
+        public IEnumerable<object> Bai29()
+        {
+            var totalCustomers = NorthwindDbContext.INSTANCE.Customers.Count();
+            var totalEmployees = NorthwindDbContext.INSTANCE.Employees.Count();
+            return new[]
+            {
+                new
+                {
+                    TotalRecords = totalCustomers + totalEmployees,
+                }
+            };
+
+        }
+
+        [HttpGet("Bai30/EmployeeWithMinimunOrders")] //same as Bai31
+        public IEnumerable<object> Bai30()
+        {
+            var minOrders = NorthwindDbContext.INSTANCE.Employees
+                .Select(e => e.Orders.Count)
+                .Min();
+            var emp = NorthwindDbContext.INSTANCE.Employees
+                .Where(e => e.Orders.Count == minOrders)
+                .Select(e => new
+                {
+                    e.EmployeeId,
+                    e.LastName,
+                    e.FirstName,
+                    e.Title,
+                    totalOrders = e.Orders.Count
+                })
+                .ToList();
+            return emp;
+        }
+
+        [HttpGet("Bai32/ProductsWithMaximumStockUnit")]
+        public IEnumerable<object> Bai32()
+        {
+            var maxStock = NorthwindDbContext.INSTANCE.Products
+                .Select(p => p.UnitsInStock)
+                .Max();
+            var products = NorthwindDbContext.INSTANCE.Products
+                .Where(p => p.UnitsInStock == maxStock)
+                .Select(p => new
+                {
+                    p.ProductId,
+                    p.ProductName,
+                    p.SupplierId,
+                    p.CategoryId,
+                    p.UnitsInStock
+                })
+                .ToList();
+            return products;
+        }
+
+        [HttpGet("Bai33/ProductsWithMinimumStockUnit")] //same as Bai34 & Bai35
+        public IEnumerable<object> Bai33()
+        {
+            var minStock = NorthwindDbContext.INSTANCE.Products
+                .Select(p => p.UnitsInStock)
+                .Min();
+            var products = NorthwindDbContext.INSTANCE.Products
+                .Where(p => p.UnitsInStock == minStock)
+                .Select(p => new
+                {
+                    p.ProductId,
+                    p.ProductName,
+                    p.SupplierId,
+                    p.CategoryId,
+                    p.UnitsInStock
+                })
+                .ToList();
+            return products;
+        }
+
+        [HttpGet("Bai36/EmployeesWithMaximumDelayedOrders")]
+        public IEnumerable<object> Bai36()
+        {
+            // First get all employees with their basic info and orders that have both dates
+            var employeesWithOrders = NorthwindDbContext.INSTANCE.Employees
+                .Select(e => new
+                {
+                    e.EmployeeId,
+                    e.LastName,
+                    e.FirstName,
+                    e.Title,
+                    Orders = e.Orders
+                        .Where(o => o.ShippedDate.HasValue && o.RequiredDate.HasValue)
+                        .Select(o => new { o.ShippedDate, o.RequiredDate })
+                        .ToList() // Execute the query and get orders
+                })
+                .ToList(); // Execute and materialize employees with their orders
+
+            // Now process the date calculations entirely client-side
+            var delayedOrders = employeesWithOrders
+                .Select(e => new
+                {
+                    e.EmployeeId,
+                    e.LastName,
+                    e.FirstName,
+                    e.Title,
+                    DelayedOrdersCount = e.Orders.Count(o => o.ShippedDate.HasValue && o.RequiredDate.HasValue && (o.ShippedDate.Value - o.RequiredDate.Value).TotalDays > 0)
+                })
+                .ToList();
+
+            var maxDelayedOrders = delayedOrders.Max(e => e.DelayedOrdersCount);
+
+            var employees = delayedOrders
+                .Where(e => e.DelayedOrdersCount == maxDelayedOrders)
+                .ToList();
+
+            return employees;
+        }
+
+        [HttpGet("Bai37/EmployeesWithMinimumDelayedOrders")]
+        public IEnumerable<object> Bai37()
+        {
+            // First get all employees with their basic info and orders that have both dates
+            var employeesWithOrders = NorthwindDbContext.INSTANCE.Employees
+                .Select(e => new
+                {
+                    e.EmployeeId,
+                    e.LastName,
+                    e.FirstName,
+                    e.Title,
+                    Orders = e.Orders
+                        .Where(o => o.ShippedDate.HasValue && o.RequiredDate.HasValue)
+                        .Select(o => new { o.ShippedDate, o.RequiredDate })
+                        .ToList() // Execute the query and get orders
+                })
+                .ToList(); // Execute and materialize employees with their orders
+            // Now process the date calculations entirely client-side
+            var delayedOrders = employeesWithOrders
+                .Select(e => new
+                {
+                    e.EmployeeId,
+                    e.LastName,
+                    e.FirstName,
+                    e.Title,
+                    DelayedOrdersCount = e.Orders.Count(o => o.ShippedDate.HasValue && o.RequiredDate.HasValue && (o.ShippedDate.Value - o.RequiredDate.Value).TotalDays > 0)
+                })
+                .ToList();
+            var minDelayedOrders = delayedOrders.Min(e => e.DelayedOrdersCount);
+            var employees = delayedOrders
+                .Where(e => e.DelayedOrdersCount == minDelayedOrders)
+                .ToList();
+            return employees;
+        }
+
+        [HttpGet("Bai38/ProductWithTopOrderedUnits/{topNumber}")] //same as Bai39
+        public IEnumerable<object> Bai38(int topNumber)
+        {
+            var result = NorthwindDbContext.INSTANCE.OrderDetails
+                .GroupBy(od => new { od.ProductId, od.Product.ProductName })
+                .Select(g => new
+                {
+                    ProductId = g.Key.ProductId,
+                    ProductName = g.Key.ProductName,
+                    TotalOrdered = g.Sum(od => od.Quantity)
+                })
+                .OrderByDescending(x => x.TotalOrdered)
+                .Take(topNumber)
+                .Reverse()
+                .ToList();
+            return result;
+        }
+
     }
 }
