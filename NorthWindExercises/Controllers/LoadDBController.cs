@@ -1,459 +1,231 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using NorthWindExercises.Modeldto;
 using NorthWindExercises.Models;
 
 namespace NorthWindExercises.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("HE182182/[controller]")]
     [ApiController]
     public class LoadDBController : ControllerBase
     {
-        [HttpGet("Bai1")]
-        public IEnumerable<string> Bai1()
+        //Basic SELECT Queries
+        [HttpGet("Ex1/HE182182/ListAllProducts")]
+        public List<Product> ListAllProducts()
         {
-            var empList = NorthwindDbContext.INSTANCE.Employees.Select(x => new EmployeeDTO(x).FullName.ToLower()).ToList();
-            return empList;
+            return NorthwindDbContext.INSTANCE.Products.ToList();
         }
 
-        [HttpGet("Bai2")]
-        public IEnumerable<string> Bai2()
+        [HttpGet("Ex2/HE182182/ShowCustomerName&Phone")]
+        public IEnumerable<Customer> ShowCustomerNameAndPhone()
         {
-            var empList = NorthwindDbContext.INSTANCE.Employees
-                .Select(x => new EmployeeDTO(x).FullName.ToUpper()).ToList();
-            return empList;
-        }
-
-        [HttpGet("Bai3/Employees/{country}")]
-        public IEnumerable<EmployeeDTO> Bai3(string country)
-        {
-            var empList = NorthwindDbContext.INSTANCE.Employees
-                .Where(x => x.Country.ToLower().Equals(country.ToLower()))
-                .Select(x => new EmployeeDTO(x)).ToList();
-            return empList;
-        }
-
-        [HttpGet("Bai4/Customers/{country}")] //same as Bai5 and Bai6
-        public IEnumerable<CustomerDTO> Bai4(string country)
-        {
-            var cusList = NorthwindDbContext.INSTANCE.Customers
-                .Where(x => x.Country.ToLower().Equals(country.ToLower()))
-                .Select(x => new CustomerDTO(x)).ToList();
-            return cusList;
-        }
-
-        [HttpGet("Bai7/Products")]
-        public IEnumerable<ProductDTO> Bai7([FromQuery] int min, [FromQuery] int max)
-        {
-            var proList = NorthwindDbContext.INSTANCE.Products
-                .Where(x => x.UnitsInStock >= min && x.UnitsInStock <= max)
-                .Select(x => new ProductDTO(x)).ToList();
-            return proList;
-        }
-
-        [HttpGet("Bai8/Products/{min}/{max}")]
-        public IEnumerable<ProductDTO> Bai8(int min, int max)
-        {
-            var proList = NorthwindDbContext.INSTANCE.Products
-                .Where(x => x.UnitsOnOrder >= min && x.UnitsOnOrder <= max)
-                .Select(x => new ProductDTO(x)).ToList();
-            return proList;
-        }
-
-        [HttpGet("Bai9/EmployeeOrderCounts/{year}")] //same as Bai10
-        public IEnumerable<object> Bai9(int year)
-        {
-            var result = NorthwindDbContext.INSTANCE.Employees
-                .Select(e => new
-                {
-                    e.EmployeeId,
-                    e.LastName,
-                    e.FirstName,
-                    e.Title,
-                    year,
-                    totalOrders = e.Orders.Count(o => o.OrderDate.Value.Year == year)
-                })
+            return NorthwindDbContext.INSTANCE.Customers
+                .Select(c => new Customer { CompanyName = c.CompanyName, Phone = c.Phone })
                 .ToList();
-
-            return result;
         }
 
-        [HttpGet("Bai11/EmployeeOrderCountsByDateRange/{startDate}/{endDate}")] //same as Bai12
-        public IEnumerable<object> Bai11(DateTime startDate, DateTime endDate)
+        [HttpGet("Ex10/HE182182/ListFirstCustomers/{topNumber}")]
+        public IEnumerable<Customer> List10FirstCustomers(int topNumber)
         {
-            var result = NorthwindDbContext.INSTANCE.Employees
-                .Select(e => new
-                {
-                    e.EmployeeId,
-                    e.LastName,
-                    e.FirstName,
-                    e.Title,
-                    e.HireDate,
-                    totalOrders = e.Orders.Count(o =>
-                        o.OrderDate.Value >= startDate &&
-                        o.OrderDate.Value <= endDate)
-                })
+            return NorthwindDbContext.INSTANCE.Customers.Take(topNumber).ToList();
+        }
+
+        //Filtering and Conditions
+        [HttpGet("Ex11/HE182182/ProductsOutOfStock")]
+        public IEnumerable<Product> ProductsOutOfStock()
+        {
+            return NorthwindDbContext.INSTANCE.Products
+                .Where(p => p.UnitsInStock == 0)
                 .ToList();
-
-            return result;
         }
 
-        [HttpGet("Bai13/OrderFreightWithTax/{startDate}/{endDate}")]
-        public IEnumerable<object> Bai13(DateTime startDate, DateTime endDate)
+        [HttpGet("Ex12/HE182182/Orders/{startDate}")]
+        public IEnumerable<Order> GetOrdersFromDate(DateTime startDate)
         {
-            var orders = NorthwindDbContext.INSTANCE.Orders
-                .Where(o => o.OrderDate.HasValue &&
-                            o.OrderDate.Value >= startDate &&
-                            o.OrderDate.Value <= endDate)
+            var orders = NorthwindDbContext.INSTANCE.Orders.Where(o => o.ShippedDate >= startDate).ToList();
+            return orders;
+        }
+
+        //JOINS
+        [HttpGet("Ex16/HE182182/OrdersWithCustomerName")]
+        public IEnumerable<object> OrdersWithCustomerName()
+        {
+            return NorthwindDbContext.INSTANCE.Orders
                 .Select(o => new
                 {
                     o.OrderId,
-                    o.Freight,
-                    o.OrderDate.Value.Day,
-                    o.OrderDate.Value.Month,
-                    o.OrderDate.Value.Year,
-                    TaxRate = (o.Freight.Value >= 100) ? "10%" : "5%",
-                    FreightWithTax = o.Freight.Value * (1 + ((o.Freight.Value >= 100) ? 0.10m : 0.05m))
-
+                    CustomerName = o.Customer.CompanyName,
+                    o.OrderDate,
+                    o.ShippedDate
                 })
                 .ToList();
-
-            return orders;
         }
-        [HttpGet("Bai14/EmployeeGender")]
-        public IEnumerable<object> Bai14()
+
+        [HttpGet("Ex20/HE182182/Employees&Supervisors")]
+        public IEnumerable<object> EmployeesAndSupervisors()
         {
-            var result = NorthwindDbContext.INSTANCE.Employees
-                .Where(e => e.TitleOfCourtesy == "Mr." || e.TitleOfCourtesy == "Mrs." || e.TitleOfCourtesy == "Ms.")
+            return NorthwindDbContext.INSTANCE.Employees
                 .Select(e => new
                 {
-                    FullName = e.LastName + " " + e.FirstName,
-                    e.TitleOfCourtesy,
-                    Sex = e.TitleOfCourtesy == "Mr." ? "Male" : "Female"
+                    e.EmployeeId,
+                    e.FirstName,
+                    e.LastName,
+                    Supervisor = e.ReportsToNavigation != null ? $"{e.ReportsToNavigation.FirstName} {e.ReportsToNavigation.LastName}" : "None"
                 })
                 .ToList();
-            return result;
         }
 
-        [HttpGet("Bai15/EmployeeGender")]
-        public IEnumerable<object> Bai15()
+        // Aggregations and GROUP BY
+        [HttpGet("Ex21/HE182182/CountCustomersPerCountry")]
+        public IEnumerable<object> CountCustomersPerCountry()
         {
-            var result = NorthwindDbContext.INSTANCE.Employees
-
-                .Select(e => new
+            return NorthwindDbContext.INSTANCE.Customers
+                .GroupBy(c => c.Country)
+                .Select(g => new
                 {
-                    FullName = e.LastName + " " + e.FirstName,
-                    e.TitleOfCourtesy,
-                    Sex = (e.TitleOfCourtesy == "Mr." || e.TitleOfCourtesy == "Dr.") ? "M" : "F"
+                    Country = g.Key,
+                    CustomerCount = g.Count()
                 })
                 .ToList();
-            return result;
         }
 
-        [HttpGet("Bai16/EmployeeGender")] //same as Bai17 and Bai18
-        public IEnumerable<object> Bai16()
+        [HttpGet("Ex24/HE182182/AverageUnitPricePerCategory")]
+        public IEnumerable<object> AverageUnitPricePerCategory()
         {
-            var result = NorthwindDbContext.INSTANCE.Employees
-                .Select(e => new
+            return NorthwindDbContext.INSTANCE.Products
+                .GroupBy(p => p.CategoryId)
+                .Select(g => new
                 {
-                    FullName = e.LastName + " " + e.FirstName,
-                    e.TitleOfCourtesy,
-                    Sex = e.TitleOfCourtesy == "Mr." ? "Male"
-                        : (e.TitleOfCourtesy == "Mrs." || e.TitleOfCourtesy == "Ms.") ? "Female"
-                        : "Unknown"
+                    CategoryId = g.Key,
+                    AveragePrice = g.Average(p => p.UnitPrice) ?? 0
                 })
                 .ToList();
-            return result;
         }
 
-        [HttpGet("Bai21/ProductRevenue/{startDate}/{endDate}")]
-        public IEnumerable<object> Bai21(DateTime startDate, DateTime endDate)
+        //HAVING and Filtering Groups
+        [HttpGet("Ex26/HE182182/CustomersWithOrdersMoreThan/{orderAmount}")]
+        public IEnumerable<object> CustomersWithOrdersAboveAmount(int orderNumbers)
         {
-            var revenues = NorthwindDbContext.INSTANCE.OrderDetails
-                .Where(od => od.Order.OrderDate.HasValue && od.Order.OrderDate.Value >= startDate
-                    && od.Order.OrderDate.Value <= endDate)
-                .Select(od => new
+            return NorthwindDbContext.INSTANCE.Orders
+                .GroupBy(o => o.CustomerId)
+                .Where(g => g.Count() > orderNumbers)
+                .Select(g => new
                 {
-                    od.Product.CategoryId,
-                    od.Product.Category.CategoryName,
-                    od.ProductId,
-                    od.Product.ProductName,
-                    od.Order.OrderDate.Value.Day,
-                    od.Order.OrderDate.Value.Month,
-                    od.Order.OrderDate.Value.Year,
-                    Revenue = od.Quantity * od.UnitPrice
+                    CustomerId = g.Key,
+                    OrderCount = g.Count()
                 })
-                .OrderBy(x => x.CategoryId)
-                .ThenBy(x => x.ProductId)
                 .ToList();
-
-            return revenues;
         }
 
-        [HttpGet("Bai22/LateOrders/{lateDays}")]
-        public IEnumerable<object> Bai22(int lateDays)
+        [HttpGet("Ex30/HE182182/CategoriesWithAverageUnitPrice/{unitPrice}")]
+        public IEnumerable<object> CategoriesWithAverageUnitPriceAbove(decimal unitPrice)
         {
-            var lateOrders = NorthwindDbContext.INSTANCE.Orders
-     .Include(o => o.Employee)
-     .AsEnumerable()
-     .Where(o => o.ShippedDate.HasValue && o.RequiredDate.HasValue &&
-                 (o.ShippedDate.Value - o.RequiredDate.Value).TotalDays == lateDays)
-     .Select(o => new
-     {
-         o.EmployeeId,
-         o.Employee?.LastName,
-         o.Employee?.FirstName,
-         o.OrderId,
-         o.OrderDate,
-         o.RequiredDate,
-         o.ShippedDate,
-     })
-     .ToList();
-
-            return lateOrders;
-        }
-
-        [HttpGet("Bai23/People/{letter}")]
-        public IEnumerable<object> Bai23(char letter)
-        {
-            var cus = NorthwindDbContext.INSTANCE.Customers
-                .Where(e => e.CompanyName.StartsWith(letter.ToString()))
-                .Select(e => new
+            return NorthwindDbContext.INSTANCE.Products
+                .GroupBy(p => p.CategoryId)
+                .Where(g => g.Average(p => p.UnitPrice) > unitPrice)
+                .Select(g => new
                 {
-                    e.CompanyName,
-                    e.Phone
-                });
-            var emp = NorthwindDbContext.INSTANCE.Employees.Select(emp => new
-            {
-                CompanyName = emp.LastName + " " + emp.FirstName,
-                Phone = emp.HomePhone
-            });
-            var result = cus.Concat(emp).ToList();
-            return result;
+                    CategoryId = g.Key,
+                    AverageUnitPrice = g.Average(p => p.UnitPrice) ?? 0
+                })
+                .ToList();
         }
 
-        [HttpGet("Bai24/Customers/{orderId}")]
-        public IEnumerable<object> Bai24(int orderId)
+        //Subqueries
+        [HttpGet("Ex31/HE182182/ProductsWithHighestPrice")]
+        public IEnumerable<Product> ProductsWithHighestPrice()
         {
-            var result = NorthwindDbContext.INSTANCE.Customers
-                .Where(c => c.Orders.Any(o => o.OrderId == orderId))
+            var maxPrice = NorthwindDbContext.INSTANCE.Products.Max(p => p.UnitPrice);
+            return NorthwindDbContext.INSTANCE.Products
+                .Where(p => p.UnitPrice == maxPrice)
+                .ToList();
+        }
+
+        [HttpGet("Ex35/HE182182/CustomersWithOrder/{productName}")]
+        public IEnumerable<object> CustomersWithOrderForProduct(string productName)
+        {
+            return NorthwindDbContext.INSTANCE.Orders.Where(o => o.OrderDetails.Any(od => od.Product.ProductName == productName))
+                .Select(o => new
+                {
+                    o.CustomerId,
+                    CustomerName = o.Customer.CompanyName,
+                    OrderId = o.OrderId,
+                    OrderDate = o.OrderDate
+
+                })
+                .ToList();
+        }
+
+        //ORDER BY, LIMIT, TOP
+        [HttpGet("Ex36/HE182182/TopProductsByPrice/{topNumber}")]
+        public IEnumerable<Product> TopProductsByPrice(int topNumber)
+        {
+            return NorthwindDbContext.INSTANCE.Products
+                .OrderByDescending(p => p.UnitPrice)
+                .Take(topNumber)
+                .ToList();
+        }
+
+        [HttpGet("Ex40/HE182182/CategoriesOrderedByProductts")]
+        public IEnumerable<object> CategoriesOrderedByProducts()
+        {
+            return NorthwindDbContext.INSTANCE.Categories
                 .Select(c => new
                 {
-                    c.CustomerId,
-                    c.CompanyName,
-                    c.ContactName,
-                    c.ContactTitle
+                    c.CategoryId,
+                    c.CategoryName,
+                    ProductCount = c.Products.Count()
                 })
+                .OrderByDescending(c => c.ProductCount)
                 .ToList();
-            return result;
         }
 
-        [HttpGet("Bai25/TopOrderedProducts/{units}")] //same as Bai26
-        public IEnumerable<object> Bai25(int units)
+        //Date Functions and Calculations
+        [HttpGet("Ex42/HE182182/EmployeeAge")]
+        public IEnumerable<object> EmployeeAge()
         {
-            var result = NorthwindDbContext.INSTANCE.OrderDetails
-                .GroupBy(od => new { od.ProductId, od.Product.ProductName })
-                .Select(g => new
-                {
-                    ProductId = g.Key.ProductId,
-                    ProductName = g.Key.ProductName,
-                    TotalUnitsOrdered = g.Sum(od => od.Quantity)
-                })
-                .Where(x => x.TotalUnitsOrdered >= units)
-                .ToList();
-
-            return result;
-        }
-
-        [HttpGet("Bai27/CategoryByMaxProduct")]
-        public IEnumerable<object> Bai27()
-        {
-            var max = NorthwindDbContext.INSTANCE.Categories
-                .Select(c => c.Products.Count)
-                .Max();
-            var cate = NorthwindDbContext.INSTANCE.Categories
-                .Where(c => c.Products.Count == max).ToList();
-            return cate;
-        }
-
-        [HttpGet("Bai28/CategoryByMinProduct")]
-        public IEnumerable<object> Bai28()
-        {
-            var min = NorthwindDbContext.INSTANCE.Categories
-                .Select(c => c.Products.Count)
-                .Min();
-            var cate = NorthwindDbContext.INSTANCE.Categories
-     .Where(c => c.Products.Count == min)
-     .ToList();
-            return cate;
-        }
-
-        [HttpGet("Bai29/TotalRecord/Customer&Employees")]
-        public IEnumerable<object> Bai29()
-        {
-            var totalCustomers = NorthwindDbContext.INSTANCE.Customers.Count();
-            var totalEmployees = NorthwindDbContext.INSTANCE.Employees.Count();
-            return new[]
-            {
-                new
-                {
-                    TotalRecords = totalCustomers + totalEmployees,
-                }
-            };
-
-        }
-
-        [HttpGet("Bai30/EmployeeWithMinimunOrders")] //same as Bai31
-        public IEnumerable<object> Bai30()
-        {
-            var minOrders = NorthwindDbContext.INSTANCE.Employees
-                .Select(e => e.Orders.Count)
-                .Min();
-            var emp = NorthwindDbContext.INSTANCE.Employees
-                .Where(e => e.Orders.Count == minOrders)
+            return NorthwindDbContext.INSTANCE.Employees
                 .Select(e => new
                 {
                     e.EmployeeId,
-                    e.LastName,
                     e.FirstName,
-                    e.Title,
-                    totalOrders = e.Orders.Count
-                })
-                .ToList();
-            return emp;
-        }
-
-        [HttpGet("Bai32/ProductsWithMaximumStockUnit")]
-        public IEnumerable<object> Bai32()
-        {
-            var maxStock = NorthwindDbContext.INSTANCE.Products
-                .Select(p => p.UnitsInStock)
-                .Max();
-            var products = NorthwindDbContext.INSTANCE.Products
-                .Where(p => p.UnitsInStock == maxStock)
-                .Select(p => new
-                {
-                    p.ProductId,
-                    p.ProductName,
-                    p.SupplierId,
-                    p.CategoryId,
-                    p.UnitsInStock
-                })
-                .ToList();
-            return products;
-        }
-
-        [HttpGet("Bai33/ProductsWithMinimumStockUnit")] //same as Bai34 & Bai35
-        public IEnumerable<object> Bai33()
-        {
-            var minStock = NorthwindDbContext.INSTANCE.Products
-                .Select(p => p.UnitsInStock)
-                .Min();
-            var products = NorthwindDbContext.INSTANCE.Products
-                .Where(p => p.UnitsInStock == minStock)
-                .Select(p => new
-                {
-                    p.ProductId,
-                    p.ProductName,
-                    p.SupplierId,
-                    p.CategoryId,
-                    p.UnitsInStock
-                })
-                .ToList();
-            return products;
-        }
-
-        [HttpGet("Bai36/EmployeesWithMaximumDelayedOrders")]
-        public IEnumerable<object> Bai36()
-        {
-            // First get all employees with their basic info and orders that have both dates
-            var employeesWithOrders = NorthwindDbContext.INSTANCE.Employees
-                .Select(e => new
-                {
-                    e.EmployeeId,
                     e.LastName,
-                    e.FirstName,
-                    e.Title,
-                    Orders = e.Orders
-                        .Where(o => o.ShippedDate.HasValue && o.RequiredDate.HasValue)
-                        .Select(o => new { o.ShippedDate, o.RequiredDate })
-                        .ToList() // Execute the query and get orders
-                })
-                .ToList(); // Execute and materialize employees with their orders
-
-            // Now process the date calculations entirely client-side
-            var delayedOrders = employeesWithOrders
-                .Select(e => new
-                {
-                    e.EmployeeId,
-                    e.LastName,
-                    e.FirstName,
-                    e.Title,
-                    DelayedOrdersCount = e.Orders.Count(o => o.ShippedDate.HasValue && o.RequiredDate.HasValue && (o.ShippedDate.Value - o.RequiredDate.Value).TotalDays > 0)
+                    Age = e.BirthDate.HasValue
+                        ? DateTime.Now.Year - e.BirthDate.Value.Year
+                        : 0
                 })
                 .ToList();
-
-            var maxDelayedOrders = delayedOrders.Max(e => e.DelayedOrdersCount);
-
-            var employees = delayedOrders
-                .Where(e => e.DelayedOrdersCount == maxDelayedOrders)
-                .ToList();
-
-            return employees;
         }
 
-        [HttpGet("Bai37/EmployeesWithMinimumDelayedOrders")]
-        public IEnumerable<object> Bai37()
+        [HttpGet("Ex45/HE182182/OrderDetails/{orderYear}")]
+        public IEnumerable<object> OrderDetailInYear(int orderYear)
         {
-            // First get all employees with their basic info and orders that have both dates
-            var employeesWithOrders = NorthwindDbContext.INSTANCE.Employees
-                .Select(e => new
+            var orders = NorthwindDbContext.INSTANCE.Orders
+                .Where(o => o.OrderDate.HasValue && o.OrderDate.Value.Year == orderYear)
+                .SelectMany(o => o.OrderDetails.Select(od => new
                 {
-                    e.EmployeeId,
-                    e.LastName,
-                    e.FirstName,
-                    e.Title,
-                    Orders = e.Orders
-                        .Where(o => o.ShippedDate.HasValue && o.RequiredDate.HasValue)
-                        .Select(o => new { o.ShippedDate, o.RequiredDate })
-                        .ToList() // Execute the query and get orders
-                })
-                .ToList(); // Execute and materialize employees with their orders
-            // Now process the date calculations entirely client-side
-            var delayedOrders = employeesWithOrders
-                .Select(e => new
-                {
-                    e.EmployeeId,
-                    e.LastName,
-                    e.FirstName,
-                    e.Title,
-                    DelayedOrdersCount = e.Orders.Count(o => o.ShippedDate.HasValue && o.RequiredDate.HasValue && (o.ShippedDate.Value - o.RequiredDate.Value).TotalDays > 0)
-                })
+                    od.Product.ProductName,
+                    od.Quantity,
+                    od.UnitPrice,
+                    OrderDate = o.OrderDate.Value
+                }))
                 .ToList();
-            var minDelayedOrders = delayedOrders.Min(e => e.DelayedOrdersCount);
-            var employees = delayedOrders
-                .Where(e => e.DelayedOrdersCount == minDelayedOrders)
-                .ToList();
-            return employees;
+            return orders;
         }
 
-        [HttpGet("Bai38/ProductWithTopOrderedUnits/{topNumber}")] //same as Bai39
-        public IEnumerable<object> Bai38(int topNumber)
+        //String and Data Type Functions
+        [HttpGet("Ex46/HE182182/CustomersWithFaxNumbers")]
+        public IEnumerable<Customer> CustomersWithFaxNumbers()
         {
-            var result = NorthwindDbContext.INSTANCE.OrderDetails
-                .GroupBy(od => new { od.ProductId, od.Product.ProductName })
-                .Select(g => new
-                {
-                    ProductId = g.Key.ProductId,
-                    ProductName = g.Key.ProductName,
-                    TotalOrdered = g.Sum(od => od.Quantity)
-                })
-                .OrderByDescending(x => x.TotalOrdered)
-                .Take(topNumber)
-                .Reverse()
+            return NorthwindDbContext.INSTANCE.Customers
+                .Where(c => !string.IsNullOrEmpty(c.Fax))
                 .ToList();
-            return result;
         }
 
+        [HttpGet("Ex50/HE182182/SuppliersWhereRegionNull")]
+        public IEnumerable<Supplier> SuppliersWhereRegionNull()
+        {
+            return NorthwindDbContext.INSTANCE.Suppliers
+                .Where(s => string.IsNullOrEmpty(s.Region))
+                .ToList();
+        }
     }
 }

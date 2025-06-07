@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.36105.23 d17.13
+VisualStudioVersion = 17.13.36105.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthWindExercises", "NorthWindExercises\NorthWindExercises.csproj", "{F7CB340C-6201-4990-B315-F822DFEE7277}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo_OData", "Demo_OData\Demo_OData.csproj", "{308E9669-02B8-47AC-9322-77C47E899189}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{F7CB340C-6201-4990-B315-F822DFEE7277}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F7CB340C-6201-4990-B315-F822DFEE7277}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F7CB340C-6201-4990-B315-F822DFEE7277}.Release|Any CPU.Build.0 = Release|Any CPU
+		{308E9669-02B8-47AC-9322-77C47E899189}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{308E9669-02B8-47AC-9322-77C47E899189}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{308E9669-02B8-47AC-9322-77C47E899189}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{308E9669-02B8-47AC-9322-77C47E899189}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
