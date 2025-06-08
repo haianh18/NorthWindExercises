@@ -100,5 +100,26 @@ namespace Demo_OData.Controllers
         {
             return _context.Products.Any(e => e.ProductId == id);
         }
+
+        //1- Liệt kê tất cả thông tin của customer kèm theo danh sách product 
+        //mà người đó đã mua
+        //2 - trả về thông tin của một khách hàng (nhập id) và danh sách 
+        //những sản phẩm mà người đó đã mua
+        //3- Liệt kê tất cả thông tin khách hàng (customer) và danh sách 
+        //các category (id, name) mà người đó đã mua 
+        //4- trả về thông tin của một customer và danh sách các category 
+        //mà người đó đã mua
+        //5- Liệt kê tất cả thông tin khách hàng (customer) và danh sách 
+        //các supplier (Supplierid, Companyname) mà người đó đã mua 
+        //6- trả về thông tin của một customer và danh sách các supplier
+        //(Supplierid, Companyname) mà người đó đã mua 
+        //7- Liệt kê tất cả các product mà danh sách shipper đã ship 
+        //product đó
+        //8- trả về thông tin của 1 product và danh sách các shipper 
+        //đã ship product đó
+        //9- liệt kê tất cả thông tin của các employee và danh sách 
+        //customer mà employee đó bán hàng
+        //10 - trả về thông tin của employee bán được nhiều hàng nhất 
+        // và danh sách các hàng đã ban được (cộng dồn các product)
     }
 }
