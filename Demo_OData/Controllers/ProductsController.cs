@@ -103,14 +103,123 @@ namespace Demo_OData.Controllers
 
         //1- Liệt kê tất cả thông tin của customer kèm theo danh sách product 
         //mà người đó đã mua
+
+        //GET: api/Products/CustomersWithProducts
+        [HttpGet("CustomersWithProducts")]
+        [EnableQuery]
+        public async Task<ActionResult<IEnumerable<object>>> GetCustomersWithProducts()
+        {
+            var customersWithProducts = await _context.Customers
+                .Select(c => new
+                {
+                    c.CustomerId,
+                    c.CompanyName,
+                    Products = c.Orders.SelectMany(o => o.OrderDetails.Select(od => od.Product)).Distinct()
+                })
+                .ToListAsync();
+            return Ok(customersWithProducts);
+        }
+
+
         //2 - trả về thông tin của một khách hàng (nhập id) và danh sách 
         //những sản phẩm mà người đó đã mua
+
+        // GET: api/Products/CustomerWithProducts/{id}
+        [HttpGet("CustomerWithProducts/{id}")]
+        [EnableQuery]
+        public async Task<ActionResult<object>> GetCustomerWithProducts(string id)
+        {
+            var customerWithProducts = await _context.Customers
+                .Where(c => c.CustomerId == id)
+                .Select(c => new
+                {
+                    c.CustomerId,
+                    c.CompanyName,
+                    Products = c.Orders.SelectMany(o => o.OrderDetails.Select(od => od.Product)).Distinct()
+                })
+                .FirstOrDefaultAsync();
+            if (customerWithProducts == null)
+            {
+                return NotFound();
+            }
+            return Ok(customerWithProducts);
+        }
+
         //3- Liệt kê tất cả thông tin khách hàng (customer) và danh sách 
         //các category (id, name) mà người đó đã mua 
+
+        // GET: api/Products/CustomersWithCategories
+        [HttpGet("CustomersWithCategories")]
+        [EnableQuery]
+        public async Task<ActionResult<IEnumerable<object>>> GetCustomersWithCategories()
+        {
+            var customersWithCategories = await _context.Customers
+                .Select(c => new
+                {
+                    c.CustomerId,
+                    c.CompanyName,
+                    Categories = c.Orders.SelectMany(o => o.OrderDetails.Select(od => new
+                    {
+                        od.Product.Category.CategoryId,
+                        od.Product.Category.CategoryName
+                    })).Distinct()
+                })
+                .ToListAsync();
+            return Ok(customersWithCategories);
+        }
+
         //4- trả về thông tin của một customer và danh sách các category 
         //mà người đó đã mua
+
+        // GET: api/Products/CustomerWithCategories/{id}
+        [HttpGet("CustomerWithCategories/{id}")]
+        [EnableQuery]
+        public async Task<ActionResult<object>> GetCustomerWithCategories(string id)
+        {
+            var customerWithCategories = await _context.Customers
+                .Where(c => c.CustomerId == id)
+                .Select(c => new
+                {
+                    c.CustomerId,
+                    c.CompanyName,
+                    Categories = c.Orders.SelectMany(o => o.OrderDetails.Select(od => new
+                    {
+                        od.Product.Category.CategoryId,
+                        od.Product.Category.CategoryName
+                    })).Distinct()
+                })
+                .FirstOrDefaultAsync();
+            if (customerWithCategories == null)
+            {
+                return NotFound();
+            }
+            return Ok(customerWithCategories);
+        }
+
+
         //5- Liệt kê tất cả thông tin khách hàng (customer) và danh sách 
         //các supplier (Supplierid, Companyname) mà người đó đã mua 
+
+        // GET: api/Products/CustomersWithSuppliers
+        [HttpGet("CustomersWithSuppliers")]
+        [EnableQuery]
+        public async Task<ActionResult<IEnumerable<object>>> GetCustomersWithSuppliers()
+        {
+            var customersWithSuppliers = await _context.Customers
+                .Select(c => new
+                {
+                    c.CustomerId,
+                    c.CompanyName,
+                    Suppliers = c.Orders.SelectMany(o => o.OrderDetails.Select(od => new
+                    {
+                        od.Product.Supplier.SupplierId,
+                        od.Product.Supplier.CompanyName
+                    })).Distinct()
+                })
+                .ToListAsync();
+            return Ok(customersWithSuppliers);
+        }
+
         //6- trả về thông tin của một customer và danh sách các supplier
         //(Supplierid, Companyname) mà người đó đã mua 
         //7- Liệt kê tất cả các product mà danh sách shipper đã ship 
